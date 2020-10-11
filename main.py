@@ -5,9 +5,7 @@ uhlovodiky = ["meth","eth","prop","but","pent","hex","hept","okt","non","dek"]
 cisla = ["mono","di","tri","tetra","penta","hexa","hepta","okta","nona","deka"]
 nazvy_vazeb = ["en","yn"]
 
-uhlovodik = "3,4,6-tributyl-7,8-methyl-3,6,8-diethyl-1-pentylokt-4-en-1-yn"
-#uhlovodik = "5,6,7,9-trioktyl-1,2,3,9-tripentylnonan"
-
+uhlovodik = "3,6-diethyl-2,4-dimethyl-4-propylokta-1,7-dien"
 
 def get_uhlovodik(vstup):
     vstup = list(filter(None, re.split("[,-]+", vstup)))
@@ -100,6 +98,7 @@ def get_uhlovodik(vstup):
 hlavni_uhlovodik_delka,zbytky,vazby = get_uhlovodik(uhlovodik)
 
 pg.init()
+pg.display.set_caption('uhlovodíkovač')
 
 #velikost
 max_zbytek_top, max_zbytek_bot = 0,0
@@ -117,8 +116,6 @@ for i in zbytky:
         elif i["delka"] > max_zbytek_bot:
             max_zbytek_bot = i["delka"]
 
-print(add_padding_x)
-
 z_size_start = 45 #délka první vazby
 z_normal_size = 35 #délka ostatních vazeb
 
@@ -134,8 +131,6 @@ screen = pg.display.set_mode([width,height])
 
 done = False
 
-print(zbytky)
-
 while not done:
 
     screen.fill([255,255,255])
@@ -144,9 +139,9 @@ while not done:
     
     for i in range(hlavni_uhlovodik_delka-1):
         if i%2==0:
-            pg.draw.line(screen, [0,0,0], [start_x+i*50,start_y], [start_x+i*50+50,start_y+50], 4)
+            pg.draw.line(screen, [0,0,0], [start_x+i*50,start_y], [start_x+i*50+50,start_y+50], 2)
         else:
-            pg.draw.line(screen, [0,0,0], [start_x+i*50,start_y+50], [start_x+i*50+50,start_y], 4)
+            pg.draw.line(screen, [0,0,0], [start_x+i*50,start_y+50], [start_x+i*50+50,start_y], 2)
     #vazby
     off = 5
     
@@ -186,7 +181,7 @@ while not done:
                 if d%2 == 1 and d > 0:
                     smer*=-1
                 elif d > 0:
-                    real_x+=z_size
+                   real_x+=z_size*-smer
 
                 if d == 0:
                     pg.draw.line(screen, [0,0,0], [real_x,real_y] , [real_x+z_size*smer,real_y+z_size*y_smer], 2)
