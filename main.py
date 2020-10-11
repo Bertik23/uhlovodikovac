@@ -126,8 +126,6 @@ def make_img(uhlovodik):
     width = (hlavni_uhlovodik_delka-1)*50+padding_x*2+sum(add_padding_x)
     height = 2*padding_y + 50 + (max_zbytek_bot+max_zbytek_top)*z_normal_size+2*(z_size_start-z_normal_size)
 
-    done = False
-
     img = Image.new("RGB", (width, height), (255, 255, 255))
     draw = ImageDraw.Draw(img)
 
@@ -135,9 +133,9 @@ def make_img(uhlovodik):
     
     for i in range(hlavni_uhlovodik_delka-1):
         if i%2==0:
-            draw.line((start_x+i*50,start_y, start_x+i*50+50,start_y+50), fill=(0,0,0), width=2)
+            draw.line((start_x+i*50,start_y, start_x+i*50+50,start_y+50), fill=(0,0,0), width=5)
         else:
-            draw.line((start_x+i*50,start_y+50, start_x+i*50+50,start_y), fill=(0,0,0), width=2)
+            draw.line((start_x+i*50,start_y+50, start_x+i*50+50,start_y), fill=(0,0,0), width=5)
     #vazby
     off = 5
 
