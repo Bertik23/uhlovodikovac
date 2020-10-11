@@ -1,11 +1,13 @@
 import re 
-import pygame as pg
+import io
+from PIL import Image, ImageDraw
 
 uhlovodiky = ["meth","eth","prop","but","pent","hex","hept","okt","non","dek"]
 cisla = ["mono","di","tri","tetra","penta","hexa","hepta","okta","nona","deka"]
 nazvy_vazeb = ["en","yn"]
 
 uhlovodik = "3,6-diethyl-2,4-dimethyl-4-propylokta-1,7-dien"
+
 
 def get_uhlovodik(vstup):
     vstup = list(filter(None, re.split("[,-]+", vstup)))
@@ -95,65 +97,59 @@ def get_uhlovodik(vstup):
     return [hlavni_uhlovodik_delka,zbytky,vazby]
 
 
-hlavni_uhlovodik_delka,zbytky,vazby = get_uhlovodik(uhlovodik)
+def make_img(uhlovodik):
+    hlavni_uhlovodik_delka,zbytky,vazby = get_uhlovodik(uhlovodik)
 
-pg.init()
-pg.display.set_caption('uhlovodíkovač')
+    #velikost
+    max_zbytek_top, max_zbytek_bot = 0,0
+    add_padding_x = [0,0]
+    for i in zbytky:
+        for p in range(len(i["pozice"])):
+            #padding stuff
+            if i["pozice"][p] == 1:
+                add_padding_x[0] = 50
+            if i["pozice"][p] == hlavni_uhlovodik_delka and i["smer"][p] == 1:
+                add_padding_x[1] = 50
 
-#velikost
-max_zbytek_top, max_zbytek_bot = 0,0
-add_padding_x = [0,0]
-for i in zbytky:
-    for p in range(len(i["pozice"])):
-        #padding stuff
-        if i["pozice"][p] == 1:
-            add_padding_x[0] = 50
-        if i["pozice"][p] == hlavni_uhlovodik_delka and i["smer"][p] == 1:
-            add_padding_x[1] = 50
+            if i["pozice"][p]%2 == 1 and i["delka"] > max_zbytek_top:
+                max_zbytek_top = i["delka"]
+            elif i["delka"] > max_zbytek_bot:
+                max_zbytek_bot = i["delka"]
 
-        if i["pozice"][p]%2 == 1 and i["delka"] > max_zbytek_top:
-            max_zbytek_top = i["delka"]
-        elif i["delka"] > max_zbytek_bot:
-            max_zbytek_bot = i["delka"]
+    z_size_start = 45 #délka první vazby
+    z_normal_size = 35 #délka ostatních vazeb
 
-z_size_start = 45 #délka první vazby
-z_normal_size = 35 #délka ostatních vazeb
+    padding_x = 20
+    padding_y = 20
 
-padding_x = 20
-padding_y = 20
+    start_x, start_y = padding_x+add_padding_x[0], padding_y+max_zbytek_top*z_normal_size+(z_size_start-z_normal_size)
+    width = (hlavni_uhlovodik_delka-1)*50+padding_x*2+sum(add_padding_x)
+    height = 2*padding_y + 50 + (max_zbytek_bot+max_zbytek_top)*z_normal_size+2*(z_size_start-z_normal_size)
 
-start_x, start_y = padding_x+add_padding_x[0], padding_y+max_zbytek_top*z_normal_size+(z_size_start-z_normal_size)
-width = (hlavni_uhlovodik_delka-1)*50+padding_x*2+sum(add_padding_x)
-height = 2*padding_y + 50 + (max_zbytek_bot+max_zbytek_top)*z_normal_size+2*(z_size_start-z_normal_size)
+    done = False
 
-
-screen = pg.display.set_mode([width,height])
-
-done = False
-
-while not done:
-
-    screen.fill([255,255,255])
+    img = Image.new("RGB", (width, height), (255, 255, 255))
+    draw = ImageDraw.Draw(img)
 
     #hlavní řetězec
     
     for i in range(hlavni_uhlovodik_delka-1):
         if i%2==0:
-            pg.draw.line(screen, [0,0,0], [start_x+i*50,start_y], [start_x+i*50+50,start_y+50], 2)
+            draw.line((start_x+i*50,start_y, start_x+i*50+50,start_y+50), fill=(0,0,0), width=2)
         else:
-            pg.draw.line(screen, [0,0,0], [start_x+i*50,start_y+50], [start_x+i*50+50,start_y], 2)
+            draw.line((start_x+i*50,start_y+50, start_x+i*50+50,start_y), fill=(0,0,0), width=2)
     #vazby
     off = 5
-    
+
     for i in vazby:
         for x in range(len(i["pozice"])):
             for d in range(i["delka"]):
                 real_x = start_x+50*(i["pozice"][x]-1)
                 off = 5*-d
                 if i["pozice"][x]%2 == 1:
-                    pg.draw.line(screen, [0,0,0], [real_x+off,start_y-off] , [real_x+off+50,start_y-off+50], 2)
+                    draw.line((real_x+off,start_y-off, real_x+off+50,start_y-off+50), fill=(0,0,0), width=2)
                 else:
-                    pg.draw.line(screen, [0,0,0], [real_x+off,start_y+off+50] , [real_x+off+50,start_y+off], 2)
+                    draw.line((real_x+off,start_y+off+50, real_x+off+50,start_y+off), fill=(0,0,0), width=2)
 
     #zbytky
     for i in zbytky:
@@ -184,12 +180,14 @@ while not done:
                    real_x+=z_size*-smer
 
                 if d == 0:
-                    pg.draw.line(screen, [0,0,0], [real_x,real_y] , [real_x+z_size*smer,real_y+z_size*y_smer], 2)
+                    draw.line((real_x,real_y, real_x+z_size*smer,real_y+z_size*y_smer), fill=(0,0,0), width=2)
                 else:
-                    pg.draw.line(screen, [0,0,0], [real_x,real_y] , [real_x+z_size*smer,real_y+z_size*y_smer], 2)
-                
-    for event in pg.event.get():
-            if event.type == pg.QUIT:
-                    done = True
+                    draw.line((real_x,real_y, real_x+z_size*smer,real_y+z_size*y_smer), fill=(0,0,0), width=2)
+ 
 
-    pg.display.update()    
+
+    img.save("temp.png", "png")
+    with open("temp.png","rb") as f:
+        return io.BytesIO(f.read())
+
+make_img(uhlovodik)
