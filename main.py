@@ -1,5 +1,4 @@
 import re 
-import pygame as pg
 import io
 from PIL import Image, ImageDraw
 
