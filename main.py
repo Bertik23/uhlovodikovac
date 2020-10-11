@@ -1,11 +1,13 @@
 import re 
 import pygame as pg
+import io
+from PIL import Image
 
 uhlovodiky = ["meth","eth","prop","but","pent","hex","hept","okt","non","dek"]
 cisla = ["mono","di","tri","tetra","penta","hexa","hepta","okta","nona","deka"]
 nazvy_vazeb = ["en","yn"]
 
-uhlovodik = "3,4,6-tributyl-7-methyl-3,6-ethylokt-4-en-1-yn"
+#uhlovodik = "3,4,6-tributyl-7-methyl-3,6-ethylokt-4-en-1-yn"
 
 
 def get_uhlovodik(vstup):
@@ -92,17 +94,16 @@ def get_uhlovodik(vstup):
     return [hlavni_uhlovodik_delka,zbytky,vazby]
 
 
-hlavni_uhlovodik_delka,zbytky,vazby = get_uhlovodik(uhlovodik)
+def make_img(uhlovodik):
+    hlavni_uhlovodik_delka,zbytky,vazby = get_uhlovodik(uhlovodik)
 
-pg.init()
+    pg.init()
 
-screen = pg.display.set_mode([500,500])
+    screen = pg.display.set_mode([500,500])
 
-done = False
+    done = False
 
-print(zbytky)
-
-while not done:
+    print(zbytky)
 
     screen.fill([255,255,255])
 
@@ -115,7 +116,7 @@ while not done:
             pg.draw.line(screen, [0,0,0], [start_x+i*50,start_y+50], [start_x+i*50+50,start_y], 2)
     #vazby
     off = 5
-    
+
     for i in vazby:
         for x in range(len(i["pozice"])):
             for d in range(i["delka"]):
@@ -160,9 +161,13 @@ while not done:
                     pg.draw.line(screen, [0,0,0], [real_x,real_y] , [real_x+z_size*smer,real_y+z_size*y_smer], 2)
                 else:
                     pg.draw.line(screen, [0,0,0], [real_x,real_y] , [real_x+z_size*smer,real_y+z_size*y_smer], 2)
-                
-    for event in pg.event.get():
-            if event.type == pg.QUIT:
-                    done = True
 
     pg.display.update()    
+
+
+    imgStr = pg.image.tostring(screen,"RGBA")
+    img = Image.frombytes("RGBA",(500,500), imgStr)
+    img.save("temp.png", "png")
+    with open("temp.png","rb") as f:
+        return io.BytesIO(f.read())
+
