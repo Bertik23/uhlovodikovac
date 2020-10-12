@@ -2,99 +2,98 @@ import re
 import io
 from PIL import Image, ImageDraw
 
-uhlovodiky = ["meth","eth","prop","but","pent","hex","hept","okt","non","dek"]
-cisla = ["mono","di","tri","tetra","penta","hexa","hepta","okta","nona","deka"]
-nazvy_vazeb = ["en","yn"]
+hydrocarbons = ["meth","eth","prop","but","pent","hex","hept","okt","non","dek"]
+numbers = ["mono","di","tri","tetra","penta","hexa","hepta","okta","nona","deka"]
+nameOfBonds = ["en","yn"]
 
 uhlovodik = "3,6-diethyl-2,4-dimethyl-4-propylokta-1,7-dien"
 
 
-def get_uhlovodik(vstup):
-    vstup = list(filter(None, re.split("[,-]+", vstup)))
+def get_uhlovodik(hydrocarbonInput):
+    hydrocarbonInput = list(filter(None, re.split("[,-]+", hydrocarbonInput)))
 
     #osekání vstupu na hlavní část
-    hlavni_retezec = 0
-    hlavni_retezec_c = 0 #počet uhlovodíků v hlavní části (1,2)
-    for i in vstup:
+    mainChain = 0
+    mainChainC = 0 #počet uhlovodíků v hlavní části (1,2)
+    for i in hydrocarbonInput:
         c = 0
-        for u in uhlovodiky:
+        for u in hydrocarbons:
             if u in i: 
                 c+=1
-        if c >= hlavni_retezec_c: 
-            hlavni_retezec_c = c
-            hlavni_retezec = i
+        if c >= mainChainC: 
+            mainChainC = c
+            mainChain = i
     #nalezení hlavního uhlovodíku
-    hlavni_uhlovodik = ""
-    if hlavni_retezec_c > 1:
+    mainHydrocarbon = ""
+    if mainChainC > 1:
         highest_index = 0
-        for i in uhlovodiky:
-            index = hlavni_retezec.find(i)
+        for index, h in enumerate(hydrocarbons):
             if index > highest_index:
                 highest_index = index
-        hlavni_uhlovodik = hlavni_retezec[highest_index:]
+        mainHydrocarbon = mainChain[highest_index:]
     else:
-        hlavni_uhlovodik = hlavni_retezec
+        mainHydrocarbon = mainChain
     #délka hlavního uhlovodíku
-    hlavni_uhlovodik_delka = 0
-    for i in uhlovodiky:
-        if i in hlavni_uhlovodik:
-            hlavni_uhlovodik_delka = uhlovodiky.index(i)+1
+    mainHydrocarbonLenght = 0
+    for i in hydrocarbons:
+        if i in mainHydrocarbon:
+            mainHydrocarbonLenght = hydrocarbons.index(i)+1
     #nalezení zbytků
-    zbytky = []
-    indexy_zbytku = []
-    for i in range(vstup.index(hlavni_retezec)+1):
-        if vstup[i].isdigit():
-            indexy_zbytku.append(int(vstup[i]))
+    residues = []
+    indexesOfResidues = []
+    for i in range(hydrocarbonInput.index(mainChain)+1):
+        if hydrocarbonInput[i].isdigit():
+            indexesOfResidues.append(int(hydrocarbonInput[i]))
         else:
-            nazev = vstup[i]
-            for c in cisla:
-                nazev = nazev.replace(c,"")
-            if i == vstup.index(hlavni_retezec):
-                nazev = nazev.replace(hlavni_uhlovodik,"")
+            name = hydrocarbonInput[i]
+            for c in numbers:
+                name = name.replace(c,"")
+            if i == hydrocarbonInput.index(mainChain):
+                name = name.replace(mainHydrocarbon,"")
 
             #print(f"{nazev}: {indexy_zbytku}")
-            delka = 0
+            lenght = 0
 
-            if nazev[-1] == "n": nazev = nazev[:-1] #nevim proč to tam dává 'n' a jsem línej to zjišťovat
+            if name[-1] == "n": name = name[:-1] #nevim proč to tam dává 'n' a jsem línej to zjišťovat
 
-            for u in uhlovodiky:
-                if nazev[:-2] in u:
-                    delka = uhlovodiky.index(u)+1
+            for u in hydrocarbons:
+                if name[:-2] in u:
+                    lenght = hydrocarbons.index(u)+1
             
-            zbytky.append({"nazev":nazev,"delka": delka,"pozice":indexy_zbytku, "smer": [-1 for i in range(len(indexy_zbytku))]})
-            indexy_zbytku = []
+            residues.append({"nazev":name,"delka": lenght,"pozice":indexesOfResidues, "smer": [-1 for i in range(len(indexesOfResidues))]})
+            indexesOfResidues = []
     #nalezení vazeb
-    index_vazeb = []
-    vazby = []
-    for i in range(vstup.index(hlavni_retezec)+1,len(vstup)):
-        if vstup[i].isdigit():
-            index_vazeb.append(int(vstup[i]))
+    indexOfBonds = []
+    bonds = []
+    for i in range(hydrocarbonInput.index(mainChain)+1,len(hydrocarbonInput)):
+        if hydrocarbonInput[i].isdigit():
+            indexOfBonds.append(int(hydrocarbonInput[i]))
         else:
-            nazev = vstup[i]
-            for c in cisla:
-                nazev = nazev.replace(c,"")
-            delka = nazvy_vazeb.index(nazev)+2
+            name = hydrocarbonInput[i]
+            for c in numbers:
+                name = name.replace(c,"")
+            lenght = nameOfBonds.index(name)+2
             
             #print(f"{nazev} ({delka}): {index_vazeb}")
-            vazby.append({"nazev":nazev,"delka": delka,"pozice":index_vazeb})
-            index_vazeb = []
+            bonds.append({"nazev":name,"delka": lenght,"pozice":indexOfBonds})
+            indexOfBonds = []
 
-    double_zbytky = []
+    doubleResidues = []
     #nastavení směru vykreslení zbytku (když jsou 2)
-    for i in zbytky:
+    for i in residues:
         for j in i["pozice"]:
             c = 0
             to_change = {"index":0,"pos_index":0}
-            for k in zbytky:
+            for k in residues:
                 for l in k["pozice"]:
                     if j == l:
                         c+=1
-                        to_change = {"index":zbytky.index(k),"pos_index":k["pozice"].index(l)}
+                        to_change = {"index":residues.index(k),"pos_index":k["pozice"].index(l)}
             if c > 1:
-                zbytky[to_change["index"]]["smer"][to_change["pos_index"]] = 1
+                residues[to_change["index"]]["smer"][to_change["pos_index"]] = 1
 
     #print(f"Hlavní řetězec: {hlavni_uhlovodik}, délka: {hlavni_uhlovodik_delka}")
-    return [hlavni_uhlovodik_delka,zbytky,vazby]
+    return [mainHydrocarbonLenght,residues,bonds]
 
 
 def make_img(uhlovodik):
