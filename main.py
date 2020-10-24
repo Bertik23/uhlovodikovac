@@ -1,103 +1,249 @@
 import re 
 import io
 from PIL import Image, ImageDraw
+import pprint
+import math
+import json
 
-hydrocarbons = ["meth","eth","prop","but","pent","hex","hept","okt","non","dek"]
+
+"""
+[0,
+ [{'delka': 2, 'nazev': 'ethyl', 'pozice': [3, 6], 'smer': [-1, -1]},
+  {'delka': 1, 'nazev': 'methyl', 'pozice': [2, 4], 'smer': [-1, -1]},
+  {'delka': 3, 'nazev': 'propyl', 'pozice': [4], 'smer': [1]}],
+ [{'delka': 2, 'nazev': 'en', 'pozice': [1, 7]}]]
+"""
+
+hydrocarbons = json.load(open("hydrocarbons.jsonc"))
 numbers = ["mono","di","tri","tetra","penta","hexa","hepta","okta","nona","deka"]
 nameOfBonds = ["en","yn"]
 
-uhlovodik = "3,6-diethyl-2,4-dimethyl-4-propylokta-1,7-dien"
+uhlovodik = "3,4-ethylnon-1,7-en"
+# uhlovodik = "2,3-methylbut-2-en"
+uhlovodik = "3-methyl-4-(2-methylpropyl)oktan"
 
+def addYL(s):
+    return s + "yl"
 
-def get_hydrocarbon(hydrocarbonInput):
-    hydrocarbonInput = list(filter(None, re.split("[,-]+", hydrocarbonInput)))
+def removeBlank(l):
+    lOut = []
+    for i in l:
+        if i != "":
+            lOut.append(i)
+    return lOut
 
-    #osekání vstupu na hlavní část
-    mainChain = 0
-    mainChainC = 0 #počet uhlovodíků v hlavní části (1,2)
-    for i in hydrocarbonInput:
-        c = 0
-        for u in hydrocarbons:
-            if u in i: 
-                c+=1
-        if c >= mainChainC: 
-            mainChainC = c
-            mainChain = i
-    #nalezení hlavního uhlovodíku
-    mainHydrocarbon = ""
-    if mainChainC > 1:
-        highest_index = 0
-        for index, h in enumerate(hydrocarbons):
-            if index > highest_index:
-                highest_index = index
-        mainHydrocarbon = mainChain[highest_index:]
+def oddEven(num):
+    if num%2 == 0:
+        return 1
     else:
-        mainHydrocarbon = mainChain
-    #délka hlavního uhlovodíku
-    mainHydrocarbonLenght = 0
-    for i in hydrocarbons:
-        if i in mainHydrocarbon:
-            mainHydrocarbonLenght = hydrocarbons.index(i)+1
-    #nalezení zbytků
-    residues = []
-    indexesOfResidues = []
-    for i in range(hydrocarbonInput.index(mainChain)+1):
-        if hydrocarbonInput[i].isdigit():
-            indexesOfResidues.append(int(hydrocarbonInput[i]))
+        return -1
+
+def positiveOrNagative(num):
+    if num > 0:
+        return 1
+    elif num < 0:
+        return -1
+    else:
+        return 0
+
+class HydroCarbon:
+    def __init__(self, name):
+        self.name = name
+        self.bonds, self.residues, self.type = self.get_hydrocarbon()
+        self.numberOfCarbons = hydrocarbons.index(self.type)+1
+        self.o = self.old()
+        self.makePlan()
+
+    def get_hydrocarbon(self):
+        hydrocarbonInput = self.name
+        hydrocarbonList = []
+        for i in hydrocarbonInput.split("-"):
+            if len(i.split("yl")) >= 2:
+                hydrocarbonList.extend(list(map(addYL, i.split("yl")[:-1])))
+                hydrocarbonList.append(i.split("yl")[-1])
+            else:
+                hydrocarbonList.append(i)
+
+        hydrocarbonList = removeBlank(hydrocarbonList)
+
+        residues = []
+        hydrocarbon = ""
+        bonds = []
+        for i, r in enumerate(hydrocarbonList):
+            if r.endswith("yl"):
+                a = 1
+                while True:
+                    try:
+                        int(hydrocarbonList[i-a].split(",")[0])
+                    except ValueError:
+                        a += 1
+                        continue
+                    else:
+                        for i_ in hydrocarbonList[i-a].split(","):
+                            residues.append((r, int(i_)))
+                        break
+
+            elif r.endswith("an"):
+                hydrocarbon = r[:-2]
+
+            else:
+                try:
+                    int(r.split(",")[0])
+                except ValueError:
+                    if r in hydrocarbons:
+                        hydrocarbon = r
+                    elif r in nameOfBonds:
+                        a = 1
+                        while True:
+                            try:
+                                int(hydrocarbonList[i-a].split(",")[0])
+                            except ValueError:
+                                a += 1
+                                continue
+                            else:
+                                for i_ in hydrocarbonList[i-a].split(","):
+                                    bonds.append((r, int(i_)))
+                                break
+                else:
+                    continue
+        return bonds, residues, hydrocarbon
+
+    def makePlan(self):
+        self.carbons = {}
+        for c in range(1,self.numberOfCarbons+1):
+            if c not in self.carbons.keys():
+                self.carbons[c] = []
+            for r in self.residues:
+                if r[1] == c:
+                    self.carbons[c].append(Residue(r[0]))
+
+            for b in self.bonds:
+                if b[1] == c:
+                    self.carbons[c].append(b[0])
+
+        print(self.carbons)
+
+    def draw(self):
+        direction = (0,1)
+        length = 50
+        thickness = 3
+        bondOfset = 10
+        mainChainPlusThicc = 0
+        img = Image.new("RGB", (1000, 1000), (255, 255, 255))
+        draw = ImageDraw.Draw(img)
+        x,y = 50,500
+        oldX, oldY = x,y
+        nextDrawBond = False
+        nextDrawBondTimes = 0
+        for c in self.carbons.keys():
+            draw.point((x,y), fill=(0,0,0))
+            draw.line((oldX, oldY, x, y),fill=(0,0,0), width=thickness+mainChainPlusThicc)
+
+            if nextDrawBond:
+                for i in range(1,nextDrawBondTimes+1):
+                    draw.line((oldX+oddEven(c)*(oddEven(i)*math.ceil(i/2)*bondOfset), oldY+(oddEven(i)*math.ceil(i/2)*bondOfset), x+oddEven(c)*(oddEven(i)*math.ceil(i/2)*bondOfset), y+(oddEven(i)*math.ceil(i/2)*bondOfset)),fill=(0,0,0), width=thickness+mainChainPlusThicc)
+                nextDrawBond = False
+
+            for r in self.carbons[c]:
+                if r in nameOfBonds:
+                    nextDrawBond = True
+                    nextDrawBondTimes = nameOfBonds.index(r)+1
+
+                try:
+                    if r.name in hydrocarbons:
+                        print(c, r, x,y)
+                        r.draw(draw, x,y, oldX, oldY, length, thickness, direction)
+                except AttributeError:
+                    pass
+
+            oldX, oldY = x,y
+            x += length
+            y += oddEven(c)*length
+
+        img.save("temp.png", "png")
+        with open("temp.png","rb") as f:
+            return io.BytesIO(f.read())
+
+
+    def old(self):
+        out = [hydrocarbons.index(self.type)]
+        rs = []
+        rD={}
+        for r in self.residues:
+            a = False
+            for _ in rs:
+                if r[0] in _.values():
+                    rD = _
+                    a = True
+                    break
+            if not a:
+                rD =  {}
+
+            rD["delka"] = hydrocarbons.index(r[0][:-2])+1
+            rD["nazev"] = r[0]
+            if not "pozice" in rD.keys():
+                rD["pozice"] = []
+            rD["pozice"].append(r[1])
+            if not "smer" in rD.keys():
+                    rD["smer"] = []
+            rD["smer"].append(1 if a else -1)
+            if not a:
+                rs.append(rD)
+        out.append(rs)
+
+        rs = []
+        for r in self.bonds:
+            a = False
+            for _ in rs:
+                if r[0] in _.values():
+                    rD = _
+                    a= True
+                    break
+            if not a:
+                rD =  {}
+
+            rD["delka"] = nameOfBonds.index(r[0])+2
+            rD["nazev"] = r[0]
+            if not "pozice" in rD.keys():
+                rD["pozice"] = []
+            rD["pozice"].append(r[1])
+            if not a:
+                rs.append(rD)
+        out.append(rs)
+        return out
+
+class Residue:
+    def __init__(self, name):
+        self.name = name[:-2]
+        self.carbons = hydrocarbons.index(self.name)+1
+
+    
+    def draw(self, draw, inX,inY, inOldX, inOldY, length, width, direction):
+        if direction[0] == 0:
+            direction = (positiveOrNagative(inY - inOldY),0)
         else:
-            name = hydrocarbonInput[i]
-            for c in numbers:
-                name = name.replace(c,"")
-            if i == hydrocarbonInput.index(mainChain):
-                name = name.replace(mainHydrocarbon,"")
+            direction = (0,positiveOrNagative(inX - inOldX))
+        x,y = inX, inY
+        oldX, oldY = x,y
+        for c in range(self.carbons+1):
+            draw.line((x,y, oldX, oldY), fill=(0,0,0), width=width)
+            oldX, oldY = x,y
+            if direction[0] == 0:
+                x += length*direction[1]
+                y += oddEven(c)*length
+            else:
+                y += length*direction[0]
+                x += oddEven(c)*length
 
-            #print(f"{nazev}: {indexy_zbytku}")
-            lenght = 0
-
-            if name[-1] == "n": name = name[:-1] #nevim proč to tam dává 'n' a jsem línej to zjišťovat
-
-            for u in hydrocarbons:
-                if name[:-2] in u:
-                    lenght = hydrocarbons.index(u)+1
-            
-            residues.append({"nazev":name,"delka": lenght,"pozice":indexesOfResidues, "smer": [-1 for i in range(len(indexesOfResidues))]})
-            indexesOfResidues = []
-    #nalezení vazeb
-    indexOfBonds = []
-    bonds = []
-    for i in range(hydrocarbonInput.index(mainChain)+1,len(hydrocarbonInput)):
-        if hydrocarbonInput[i].isdigit():
-            indexOfBonds.append(int(hydrocarbonInput[i]))
-        else:
-            name = hydrocarbonInput[i]
-            for c in numbers:
-                name = name.replace(c,"")
-            lenght = nameOfBonds.index(name)+2
-            
-            #print(f"{nazev} ({delka}): {index_vazeb}")
-            bonds.append({"nazev":name,"delka": lenght,"pozice":indexOfBonds})
-            indexOfBonds = []
-
-    doubleResidues = []
-    #nastavení směru vykreslení zbytku (když jsou 2)
-    for i in residues:
-        for j in i["pozice"]:
-            c = 0
-            to_change = {"index":0,"pos_index":0}
-            for k in residues:
-                for l in k["pozice"]:
-                    if j == l:
-                        c+=1
-                        to_change = {"index":residues.index(k),"pos_index":k["pozice"].index(l)}
-            if c > 1:
-                residues[to_change["index"]]["smer"][to_change["pos_index"]] = 1
-
-    #print(f"Hlavní řetězec: {hlavni_uhlovodik}, délka: {hlavni_uhlovodik_delka}")
-    return [mainHydrocarbonLenght,residues,bonds]
-
+    def __str__(self):
+        return f"Residue {self.name}"
+    def __repr__(self):
+        return self.__str__()
 
 def make_img(hydrocarbon):
-    mainHydrocarbonLenght, residues, bonds = get_hydrocarbon(hydrocarbon)
+    mainHydrocarbonLenght, residues, bonds = HydroCarbon(hydrocarbon).o
+
+    pprint.pprint(HydroCarbon(hydrocarbon).o)
 
     #velikost
     maxResidueTop, maxResidueBottom = 0,0
@@ -109,7 +255,6 @@ def make_img(hydrocarbon):
                 add_padding_x[0] = 50
             if i["pozice"][p] == mainHydrocarbonLenght and i["smer"][p] == 1:
                 add_padding_x[1] = 50
-
             if i["pozice"][p]%2 == 1 and i["delka"] > maxResidueTop:
                 maxResidueTop = i["delka"]
             elif i["delka"] > maxResidueBottom:
@@ -187,4 +332,8 @@ def make_img(hydrocarbon):
     with open("temp.png","rb") as f:
         return io.BytesIO(f.read())
 
-make_img(uhlovodik)
+#pprint.pprint(get_hydrocarbon(uhlovodik))
+
+# make_img(uhlovodik)
+h = HydroCarbon(uhlovodik)
+h.draw()
