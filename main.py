@@ -20,7 +20,10 @@ nameOfBonds = ["en","yn"]
 
 uhlovodik = "3,4-ethylnon-1,7-en"
 # uhlovodik = "2,3-methylbut-2-en"
-uhlovodik = "3-methyl-4-(2-methylpropyl)oktan"
+uhlovodik = "3-methyl-4-(2-methyl-3-(2-propyl)propyl)oktan"
+
+class GetOutOfLoop(Exception):
+    pass
 
 def addYL(s):
     return s + "yl"
@@ -46,67 +49,81 @@ def positiveOrNagative(num):
     else:
         return 0
 
+def rstripIfEndingWith(s, chars):
+    if s.endswith(chars):
+        return s.rstrip(chars)
+    else:
+        return s
+
+def lstripIfEndingWith(s, chars):
+    if s.startswith(chars):
+        return s.lstrip(chars)
+    else:
+        return s
+
+def ifString(s):
+    if type(s) == str:
+        return s
+    else:
+        return ""
+
 class HydroCarbon:
     def __init__(self, name):
         self.name = name
-        self.bonds, self.residues, self.type = self.get_hydrocarbon()
+        self.get_hydrocarbon()
         self.numberOfCarbons = hydrocarbons.index(self.type)+1
-        self.o = self.old()
-        self.makePlan()
+        # self.makePlan()
 
     def get_hydrocarbon(self):
         hydrocarbonInput = self.name
-        hydrocarbonList = []
-        for i in hydrocarbonInput.split("-"):
-            if len(i.split("yl")) >= 2:
-                hydrocarbonList.extend(list(map(addYL, i.split("yl")[:-1])))
-                hydrocarbonList.append(i.split("yl")[-1])
-            else:
-                hydrocarbonList.append(i)
-
-        hydrocarbonList = removeBlank(hydrocarbonList)
-
-        residues = []
-        hydrocarbon = ""
-        bonds = []
-        for i, r in enumerate(hydrocarbonList):
-            if r.endswith("yl"):
-                a = 1
-                while True:
-                    try:
-                        int(hydrocarbonList[i-a].split(",")[0])
-                    except ValueError:
-                        a += 1
-                        continue
-                    else:
-                        for i_ in hydrocarbonList[i-a].split(","):
-                            residues.append((r, int(i_)))
-                        break
-
-            elif r.endswith("an"):
-                hydrocarbon = r[:-2]
-
-            else:
+        self.carbons = {}
+        while True:
+            try:
+                for hc in hydrocarbons:
+                    if hydrocarbonInput.endswith(hc):
+                        self.type = hc
+                        raise GetOutOfLoop
+            except GetOutOfLoop:
+                break
+            hydrocarbonInput = hydrocarbonInput[:-1]
+        hydrocarbonInput = rstripIfEndingWith(self.name[:self.name.rfind(self.type)] + self.name[self.name.rfind(self.type)+len(self.type):],"an")
+        # print(hydrocarbonInput)
+        hydrocarbonList = hydrocarbonInput.split("-")
+        print(hydrocarbonList)
+        while "(" in "".join(map(ifString,hydrocarbonList)):
+            for i, p in enumerate(hydrocarbonList):
+                #print(i,p)
                 try:
-                    int(r.split(",")[0])
-                except ValueError:
-                    if r in hydrocarbons:
-                        hydrocarbon = r
-                    elif r in nameOfBonds:
-                        a = 1
-                        while True:
-                            try:
-                                int(hydrocarbonList[i-a].split(",")[0])
-                            except ValueError:
-                                a += 1
-                                continue
-                            else:
-                                for i_ in hydrocarbonList[i-a].split(","):
-                                    bonds.append((r, int(i_)))
-                                break
-                else:
-                    continue
-        return bonds, residues, hydrocarbon
+                    if p.startswith("("):
+                        for i_, p_ in enumerate(reversed(hydrocarbonList[i+1:])):
+                            if p_.endswith(")"):
+                                fromTo = i,i+1+len(hydrocarbonList[i+1:])-i_
+                                hydrocarbonList.insert(i,Residue("-".join(hydrocarbonList[fromTo[0]:fromTo[1]]).lstrip("(").rstrip(")")))
+                                for i__, p__ in enumerate(hydrocarbonList[fromTo[0]+1:fromTo[1]+1]):
+                                    hydrocarbonList.pop(fromTo[0]+1)
+                except Exception as e:
+                    print(e)
+
+        print(hydrocarbonList)
+
+        for carbon in range(1,hydrocarbons.index(self.type)+2):
+            if carbon not in self.carbons.keys():
+                self.carbons[carbon] = []
+            for i, p_ in enumerate(hydrocarbonList):
+                try:
+                    for p in p_.split(","):
+                        try:
+                            if int(p) == carbon:
+                                if type(hydrocarbonList[i+1]) != Residue:
+                                    self.carbons[carbon].append(Residue(hydrocarbonList[i+1]))
+                                else:
+                                    self.carbons[carbon].append(hydrocarbonList[i+1])
+                        except ValueError:
+                            pass
+                except AttributeError:
+                    pass
+        print(self.carbons)
+
 
     def makePlan(self):
         self.carbons = {}
@@ -165,57 +182,13 @@ class HydroCarbon:
             return io.BytesIO(f.read())
 
 
-    def old(self):
-        out = [hydrocarbons.index(self.type)]
-        rs = []
-        rD={}
-        for r in self.residues:
-            a = False
-            for _ in rs:
-                if r[0] in _.values():
-                    rD = _
-                    a = True
-                    break
-            if not a:
-                rD =  {}
-
-            rD["delka"] = hydrocarbons.index(r[0][:-2])+1
-            rD["nazev"] = r[0]
-            if not "pozice" in rD.keys():
-                rD["pozice"] = []
-            rD["pozice"].append(r[1])
-            if not "smer" in rD.keys():
-                    rD["smer"] = []
-            rD["smer"].append(1 if a else -1)
-            if not a:
-                rs.append(rD)
-        out.append(rs)
-
-        rs = []
-        for r in self.bonds:
-            a = False
-            for _ in rs:
-                if r[0] in _.values():
-                    rD = _
-                    a= True
-                    break
-            if not a:
-                rD =  {}
-
-            rD["delka"] = nameOfBonds.index(r[0])+2
-            rD["nazev"] = r[0]
-            if not "pozice" in rD.keys():
-                rD["pozice"] = []
-            rD["pozice"].append(r[1])
-            if not a:
-                rs.append(rD)
-        out.append(rs)
-        return out
-
 class Residue:
     def __init__(self, name):
         self.name = name[:-2]
-        self.carbons = hydrocarbons.index(self.name)+1
+        try:
+            self.carbons = hydrocarbons.index(self.name)+1
+        except:
+            pass
 
     
     def draw(self, draw, inX,inY, inOldX, inOldY, length, width, direction):
@@ -240,100 +213,5 @@ class Residue:
     def __repr__(self):
         return self.__str__()
 
-def make_img(hydrocarbon):
-    mainHydrocarbonLenght, residues, bonds = HydroCarbon(hydrocarbon).o
-
-    pprint.pprint(HydroCarbon(hydrocarbon).o)
-
-    #velikost
-    maxResidueTop, maxResidueBottom = 0,0
-    add_padding_x = [0,0]
-    for i in residues:
-        for p in range(len(i["pozice"])):
-            #padding stuff
-            if i["pozice"][p] == 1:
-                add_padding_x[0] = 50
-            if i["pozice"][p] == mainHydrocarbonLenght and i["smer"][p] == 1:
-                add_padding_x[1] = 50
-            if i["pozice"][p]%2 == 1 and i["delka"] > maxResidueTop:
-                maxResidueTop = i["delka"]
-            elif i["delka"] > maxResidueBottom:
-                maxResidueBottom = i["delka"]
-
-    z_size_start = 45 #délka první vazby
-    z_normal_size = 35 #délka ostatních vazeb
-
-    padding_x = 20
-    padding_y = 20
-
-    start_x, start_y = padding_x+add_padding_x[0], padding_y+maxResidueTop*z_normal_size+(z_size_start-z_normal_size)
-    width = (mainHydrocarbonLenght-1)*50+padding_x*2+sum(add_padding_x)
-    height = 2*padding_y + 50 + (maxResidueBottom+maxResidueTop)*z_normal_size+2*(z_size_start-z_normal_size)
-
-    img = Image.new("RGB", (width, height), (255, 255, 255))
-    draw = ImageDraw.Draw(img)
-
-    #hlavní řetězec
-    
-    for i in range(mainHydrocarbonLenght-1):
-        if i%2==0:
-            draw.line((start_x+i*50,start_y, start_x+i*50+50,start_y+50), fill=(0,0,0), width=5)
-        else:
-            draw.line((start_x+i*50,start_y+50, start_x+i*50+50,start_y), fill=(0,0,0), width=5)
-    #vazby
-    off = 5
-
-    for i in bonds:
-        for x in range(len(i["pozice"])):
-            for d in range(i["delka"]):
-                real_x = start_x+50*(i["pozice"][x]-1)
-                off = 5*-d
-                if i["pozice"][x]%2 == 1:
-                    draw.line((real_x+off,start_y-off, real_x+off+50,start_y-off+50), fill=(0,0,0), width=2)
-                else:
-                    draw.line((real_x+off,start_y+off+50, real_x+off+50,start_y+off), fill=(0,0,0), width=2)
-
-    #zbytky
-    for i in residues:
-        for x in range(len(i["pozice"])):
-            for d in range(i["delka"]):
-
-                direction = i["smer"][x]
-
-                z_size = z_size_start if d == 0 else z_normal_size
-
-                if d > 0:
-                    real_x = start_x+50*(i["pozice"][x]-1)+z_size*direction+(z_size_start-z_normal_size)*direction
-                else:
-                    real_x = start_x+50*(i["pozice"][x]-1)
-
-                if i["pozice"][x]%2 == 0:
-                    if d>0: real_y = start_y+z_size*d+50+(z_size_start-z_normal_size)
-                    else: real_y = start_y+z_size*d+50
-                else:
-                    if d>0: real_y = start_y-z_size*d-(z_size_start-z_normal_size)
-                    else: real_y = start_y-z_size*d
-                
-                directionY = 1 if i["pozice"][x]%2 == 0 else -1
-                
-                if d%2 == 1 and d > 0:
-                    direction*=-1
-                elif d > 0:
-                   real_x+=z_size*-direction
-
-                if d == 0:
-                    draw.line((real_x,real_y, real_x+z_size*direction,real_y+z_size*directionY), fill=(0,0,0), width=2)
-                else:
-                    draw.line((real_x,real_y, real_x+z_size*direction,real_y+z_size*directionY), fill=(0,0,0), width=2)
- 
-
-
-    img.save("temp.png", "png")
-    with open("temp.png","rb") as f:
-        return io.BytesIO(f.read())
-
-#pprint.pprint(get_hydrocarbon(uhlovodik))
-
-# make_img(uhlovodik)
 h = HydroCarbon(uhlovodik)
 h.draw()
