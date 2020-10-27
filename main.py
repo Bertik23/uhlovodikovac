@@ -1,18 +1,8 @@
-import re 
 import io
-from PIL import Image, ImageDraw
-import pprint
-import math
 import json
+import math
 
-
-"""
-[0,
- [{'delka': 2, 'nazev': 'ethyl', 'pozice': [3, 6], 'smer': [-1, -1]},
-  {'delka': 1, 'nazev': 'methyl', 'pozice': [2, 4], 'smer': [-1, -1]},
-  {'delka': 3, 'nazev': 'propyl', 'pozice': [4], 'smer': [1]}],
- [{'delka': 2, 'nazev': 'en', 'pozice': [1, 7]}]]
-"""
+from PIL import Image, ImageDraw
 
 hydrocarbons = json.load(open("hydrocarbons.jsonc"))
 numbers = ["mono","di","tri","tetra","penta","hexa","hepta","okta","nona","deka"]
