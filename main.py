@@ -1,6 +1,7 @@
 import io
 import json
 import math
+import numpy as np
 
 from PIL import Image, ImageDraw
 
@@ -11,6 +12,8 @@ nameOfBonds = ["en","yn"]
 uhlovodik = "3,4-ethylnon-1,7-en"
 # uhlovodik = "2,3-methylbut-2-en"
 uhlovodik = "3-methyl-4-(2-(2-propylhexyl)propyl)oktan"
+# uhlovodik = "3-methyl-2-ethylhexan"
+# uhlovodik = "ethan"
 
 class GetOutOfLoop(Exception):
     pass
@@ -56,6 +59,19 @@ def ifString(s):
         return s
     else:
         return ""
+
+def maxOrZero(l):
+    try:
+        return max(l)
+    except ValueError:
+        return -math.inf
+
+def minOrZero(l):
+    try:
+        return min(l)
+    except ValueError:
+        return math.inf
+
 
 
 
@@ -124,9 +140,9 @@ class HydroCarbon:
         thickness = 3
         bondOfset = 10
         mainChainPlusThicc = 0
-        img = Image.new("RGB", (1000, 1000), (255, 255, 255))
+        img = Image.new("RGB", (8000, 8000), (255, 255, 255))
         draw = ImageDraw.Draw(img)
-        x,y = 50,500
+        x,y = 4000,4000
         oldX, oldY = x,y
         nextDrawBond = False
         nextDrawBondTimes = 0
@@ -151,6 +167,40 @@ class HydroCarbon:
             oldX, oldY = x,y
             x += length
             y += oddEven(c)*length
+
+        array = np.asarray(img)
+        nEarray = []
+        for i, line in enumerate(array):
+            # for i_, collumn in enumerate(line):
+            #     if list(collumn) != [255,255,255]:
+            #         print(i_)
+            #         break
+            nEarray.append(np.not_equal([255,255,255], line))
+
+        nZarray = []
+        for i in nEarray:
+            nZarray.append(np.nonzero(i))
+
+        print(len(nZarray), len(nEarray), len(array))
+        print(len(nZarray[0]), len(nEarray[0]), len(array[0]))
+
+        bbox = [None, None, None, None]
+        bbox[2] = max([maxOrZero(i[0]) for i in nZarray])+1
+        for i,b in enumerate([maxOrZero(i[0]) for i in nZarray]):
+            if b != -math.inf:
+                bbox[1] = i
+                break
+        for i,b in enumerate(reversed([maxOrZero(i[0]) for i in nZarray])):
+            if b != -math.inf:
+                bbox[3] = len([maxOrZero(i[0]) for i in nZarray]) - i
+                break
+        bbox[0] = min([minOrZero(i[0]) for i in nZarray])
+
+        print(bbox)
+
+        print(img.getbbox())
+
+        img = img.crop(bbox)
 
         img.save("temp.png", "png")
         with open("temp.png","rb") as f:
