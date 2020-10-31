@@ -3,6 +3,9 @@ import json
 import math
 import numpy as np
 
+from functions import *
+from exceptions import *
+
 from PIL import Image, ImageDraw
 
 hydrocarbons = json.load(open("hydrocarbons.jsonc"))
@@ -15,69 +18,11 @@ uhlovodik = "3-methyl-4-(2-(2-propylhexyl)propyl)oktan"
 # uhlovodik = "3-methyl-2-ethylhexan"
 # uhlovodik = "ethan"
 
-class GetOutOfLoop(Exception):
-    pass
-
-def addYL(s):
-    return s + "yl"
-
-def removeBlank(l):
-    lOut = []
-    for i in l:
-        if i != "":
-            lOut.append(i)
-    return lOut
-
-def oddEven(num):
-    if num%2 == 0:
-        return 1
-    else:
-        return -1
-
-def positiveOrNagative(num):
-    if num > 0:
-        return 1
-    elif num < 0:
-        return -1
-    else:
-        return 0
-
-def rstripIfEndingWith(s, chars):
-    if s.endswith(chars):
-        return s.rstrip(chars)
-    else:
-        return s
-
-def lstripIfEndingWith(s, chars):
-    if s.startswith(chars):
-        return s.lstrip(chars)
-    else:
-        return s
-
-def ifString(s):
-    if type(s) == str:
-        return s
-    else:
-        return ""
-
-def maxOrZero(l):
-    try:
-        return max(l)
-    except ValueError:
-        return -math.inf
-
-def minOrZero(l):
-    try:
-        return min(l)
-    except ValueError:
-        return math.inf
-
-
-
 
 def get_hydrocarbon(hydrocarbonInput):
     name = hydrocarbonInput
     carbons = {}
+    hCtype = "" 
     while True:
         try:
             for hc in hydrocarbons:
