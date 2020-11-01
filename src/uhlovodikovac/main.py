@@ -149,7 +149,7 @@ class HydroCarbon:
         img = img.crop(bbox)
 
         img.save(os.path.dirname(__file__)+"/temp.png", "png")
-        with open("temp.png","rb") as f:
+        with open(os.path.dirname(__file__)+"/temp.png","rb") as f:
             return io.BytesIO(f.read())
 
 
