@@ -1,0 +1,44 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2020, Bertik23
+# This file is distributed under the same license as the uhlovodikovac
+# package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2020.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: uhlovodikovac \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2020-11-01 15:47+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.8.0\n"
+
+#: ../../source/index.rst:9
+msgid "Contents:"
+msgstr "Obsah:"
+
+#: ../../source/index.rst:7
+msgid "Welcome to uhlovodikovac's documentation!"
+msgstr "Vítejte"
+
+#: ../../source/index.rst:18
+msgid "Indices and tables"
+msgstr "Rejstřík a obsah"
+
+#: ../../source/index.rst:20
+msgid ":ref:`genindex`"
+msgstr ""
+
+#: ../../source/index.rst:21
+msgid ":ref:`modindex`"
+msgstr ""
+
+#: ../../source/index.rst:22
+msgid ":ref:`search`"
+msgstr ""
+

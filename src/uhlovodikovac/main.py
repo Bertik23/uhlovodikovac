@@ -22,7 +22,7 @@ uhlovodik = "3-methyl-4-(2-(2-propylhexyl)propyl)oktan"
 def get_hydrocarbon(hydrocarbonInput):
     name = hydrocarbonInput
     carbons = {}
-    hCtype = "" 
+    hCtype = ""
     while True:
         try:
             for hc in hydrocarbons:
@@ -163,7 +163,7 @@ class Residue:
         self.carbons, self.type = get_hydrocarbon(self.name)
         #print(self.carbons)
 
-    
+
     def draw(self, draw, inX,inY, inOldX, inOldY, length, width, direction, bondOfset):
         if direction[0] == 0:
             direction = (positiveOrNagative(inY - inOldY),0)
@@ -212,4 +212,5 @@ class Residue:
         return self.__str__()
 
 # h = HydroCarbon(uhlovodik)
-# h.draw()
+# with open("image.png","wb") as f:
+#     f.write(h.draw().getbuffer())

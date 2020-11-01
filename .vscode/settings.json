@@ -1,3 +1,4 @@
 {
-    "python.pythonPath": "d:\\Python\\uhlovodikovac\\venv\\Scripts\\python.exe"
+    "python.pythonPath": "d:\\Python\\uhlovodikovac\\venv\\Scripts\\python.exe",
+    "python.analysis.extraPaths": ["d:\\Python\\uhlovodikovac\\src\\uhlovodikovac"]
 }
