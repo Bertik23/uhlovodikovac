@@ -2,13 +2,14 @@ import io
 import json
 import math
 import numpy as np
+import os
 
 from .functions import *
 from .exceptions import *
 
 from PIL import Image, ImageDraw
 
-hydrocarbons = json.load(open("hydrocarbons.jsonc"))
+hydrocarbons = json.load(open(os.path.dirname(__file__)+"/hydrocarbons.jsonc"))
 numbers = ["mono","di","tri","tetra","penta","hexa","hepta","okta","nona","deka"]
 nameOfBonds = ["en","yn"]
 
@@ -147,7 +148,7 @@ class HydroCarbon:
 
         img = img.crop(bbox)
 
-        img.save("temp.png", "png")
+        img.save(os.path.dirname(__file__)+"/temp.png", "png")
         with open("temp.png","rb") as f:
             return io.BytesIO(f.read())
 
