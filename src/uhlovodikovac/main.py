@@ -3,8 +3,8 @@ import json
 import math
 import numpy as np
 
-from functions import *
-from exceptions import *
+from .functions import *
+from .exceptions import *
 
 from PIL import Image, ImageDraw
 

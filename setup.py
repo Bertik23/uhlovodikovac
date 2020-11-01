@@ -14,7 +14,8 @@ setuptools.setup(
     url="https://github.com/bertik23/uhlovodikovac",
     packages=setuptools.find_packages(where="src"),
     install_requires=[
-        "Pillow ~= 8.0.0"
+        "Pillow ~= 8.0.0",
+        "numpy ~= 1.17.0"
     ],
     classifiers=[
         "Programming Language :: Python :: 3",

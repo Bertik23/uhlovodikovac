@@ -1,1 +1,1 @@
-from main import HydroCarbon
+from .main import HydroCarbon
