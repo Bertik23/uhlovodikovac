@@ -1,11 +1,11 @@
 import setuptools
 
-with open("README.md", "r") as fh:
+with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setuptools.setup(
     name="uhlovodikovac", # Replace with your own username
-    version="0.0.1",
+    version="0.0.2",
     author="Bertik23",
     author_email="bertikxxiii@gmail.com",
     description="Package for Hydrocarbon to Image conversion",
@@ -23,5 +23,6 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     python_requires='>=3.7',
-    package_dir={"":"src"}
+    package_dir={"":"src"},
+    package_data={'uhlovodikovac': ['hydrocarbons.jsonc']}
 )
