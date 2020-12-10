@@ -1,12 +1,13 @@
 import setuptools
+import uhlovodikovac
 
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="uhlovodikovac", # Replace with your own username
-    version="0.0.4",
-    author="Bertik23",
+    name=uhlovodikovac.__title__, # Replace with your own username
+    version=uhlovodikovac.__version__,
+    author=uhlovodikovac.__author__,
     author_email="bertikxxiii@gmail.com",
     description="Package for Hydrocarbon to Image conversion",
     long_description=long_description,
