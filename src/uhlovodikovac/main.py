@@ -33,6 +33,8 @@ def get_hydrocarbon(hydrocarbonInput):
         except GetOutOfLoop:
             break
         hydrocarbonInput = hydrocarbonInput[:-1]
+        if len(hydrocarbonInput) == 0:
+            raise NotImplementedError
     hydrocarbonInput = rstripIfEndingWith(name[:name.rfind(hCtype)] + name[name.rfind(hCtype)+len(hCtype):],"an")
     # print(hydrocarbonInput)
     hydrocarbonList = hydrocarbonInput.split("-")
